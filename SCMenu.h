@@ -13,9 +13,9 @@
 #include <stdlib.h>
 
 #ifdef nullptr
-#define nullptr_t nullptr
+  #define nullptr_t nullptr
 #else
-#define nullptr_t NULL
+  #define nullptr_t NULL
 #endif
 
 /**
@@ -79,13 +79,12 @@ class SCMenu {
     void setRendererBefore(SCMenuCallback);
     void setRendererMenuItem(SCMenuItemCallback);
     void setRendererAfter(SCMenuCallback);
-    SCMenuItem* addItem(char*, SCMenuItem*);
-    bool prev(bool);
-    bool next(bool);
+    SCMenuItem* addItem(char*, SCMenuItem* = nullptr_t);
+    bool prev(bool = false);
+    bool next(bool = false);
     void select();
     bool back();
     void render();
 };
 
-#include "SCMenu.cpp"
 #endif

@@ -95,7 +95,6 @@ void SCMenuItem::show() {
   _hidden = false;
 }
 
-
 /**
  * SCMenu constructor
  */
@@ -106,9 +105,8 @@ SCMenu::SCMenu() {
   _rendererMenuItem = nullptr_t;
   _selectListener = nullptr_t;
   _items = (SCMenuItem*)(malloc(sizeof(SCMenuItem)));
-  std::cout<<"\n"<<sizeof(SCMenuItem)<<"\n";
   if (_items == nullptr_t) {
-    //free(_items);
+    free(_items);
   }
   SCMenu::reset();
 }
@@ -140,7 +138,7 @@ void SCMenu::reset() {
  *
  * @return pointer to newly created menu item
  */
-SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem = nullptr_t) {
+SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem) {
   SCMenuItem *itemsNew;
   itemsNew = (SCMenuItem*)realloc(_items, sizeof(SCMenuItem)*(_itemsLen+1));
   if (itemsNew == nullptr_t) {
@@ -169,7 +167,7 @@ SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem = nullptr_t) {
  *
  * @return true if focus is changed
  */
-bool SCMenu::prev(bool loop = false) {
+bool SCMenu::prev(bool loop) {
   bool founded_next = false;
   int old_focus = _focusedItemIndex;
   int loop_start_index = 0;
@@ -210,7 +208,7 @@ bool SCMenu::prev(bool loop = false) {
  *
  * @return true if focus is changed
  */
-bool SCMenu::next(bool loop = false) {
+bool SCMenu::next(bool loop) {
   bool founded_next = false;
   int old_focus = _focusedItemIndex;
   int loop_start_index = 0;
@@ -290,6 +288,7 @@ bool SCMenu::back() {
  * Render the menu
  */
 void SCMenu::render() {
+
   if (_rendererBefore != nullptr_t) {
     (_rendererBefore)();
   }
@@ -334,7 +333,7 @@ void SCMenu::setRendererBefore(SCMenuCallback callback) {
  * @param render callback function
  */
 void SCMenu::setRendererAfter(SCMenuCallback callback) {
-    _rendererAfter = callback;
+  _rendererAfter = callback;
 }
 
 /**
@@ -343,5 +342,5 @@ void SCMenu::setRendererAfter(SCMenuCallback callback) {
  * @param render callback function
  */
 void SCMenu::setRendererMenuItem(SCMenuItemCallback callback) {
-    _rendererMenuItem = callback;
+  _rendererMenuItem = callback;
 }
