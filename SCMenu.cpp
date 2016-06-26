@@ -100,8 +100,8 @@ void SCMenuItem::show() {
  */
 SCMenu::SCMenu() {
   _itemsLen = 0;
-  _rendererBefore = nullptr_t;
-  _rendererAfter = nullptr_t;
+  _rendererMenuBefore = nullptr_t;
+  _rendererMenuAfter = nullptr_t;
   _rendererMenuItem = nullptr_t;
   _selectListener = nullptr_t;
   _items = (SCMenuItem*)(malloc(sizeof(SCMenuItem)));
@@ -138,7 +138,7 @@ void SCMenu::reset() {
  *
  * @return pointer to newly created menu item
  */
-SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem) {
+SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parent_item) {
   SCMenuItem *items_new;
   items_new = (SCMenuItem*)realloc(_items, sizeof(SCMenuItem)*(_itemsLen+1));
   if (items_new == nullptr_t) {
@@ -146,14 +146,15 @@ SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem) {
     return nullptr_t;
   }
   else {
+    _items = items_new;
     _items[_itemsLen]._label = label;
-    _items[_itemsLen]._parent = parentItem;
+    _items[_itemsLen]._parent = parent_item;
     _items[_itemsLen]._isFocused = _itemsLen == 0 ? true : false;
     _items[_itemsLen]._isSelected = false;
     _items[_itemsLen]._hasChildrens = false;
     _items[_itemsLen]._hidden = false;
-    if (parentItem != nullptr_t) {
-      parentItem->_hasChildrens = true;
+    if (parent_item != nullptr_t) {
+      parent_item->_hasChildrens = true;
     }
     _itemsLen++;
     return &_items[_itemsLen-1];
@@ -200,7 +201,7 @@ void SCMenu::first() {
     if (!loop_start_index_found) {
       if ((_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) || (!_hasSelection && _items[i]._parent == nullptr_t)) {
         loop_start_index_found = true;
-        _items[i]._isFocused = false;
+        _items[i]._isFocused = true;
         _focusedItemIndex = i;
       }
     }
@@ -217,7 +218,7 @@ void SCMenu::last() {
     if (!loop_start_index_found) {
       if ((_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) || (!_hasSelection && _items[i]._parent == nullptr_t)) {
         loop_start_index_found = true;
-        _items[i]._isFocused = false;
+        _items[i]._isFocused = true;
         _focusedItemIndex = i;
       }
     }
@@ -377,22 +378,22 @@ SCMenuItem* SCMenu::getSelected() {
 void SCMenu::render() {
 
   // Execute callback before menu items are rendered.
-  if (_rendererBefore != nullptr_t) {
-    (_rendererBefore)();
+  if (_rendererMenuBefore != nullptr_t) {
+    (_rendererMenuBefore)();
   }
 
   // Actual menu item rendering, skip hidden menu items.
   if (_rendererMenuItem != nullptr_t) {
     for (scmenu_index i = 0; i < _itemsLen; i++) {
-      if (!_hasSelection && !_items[i].isHidden() && !_items[i]._parent && _items[i]._parent == &_items[_selectedItemIndex]) {
+      if (!_items[i].isHidden() && ( (!_hasSelection && !_items[i]._parent) || (_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) ) ) {
         (_rendererMenuItem)(&_items[i]);
       }
     }
   }
 
   // Execute callback after menu items are rendered.
-  if (_rendererAfter != nullptr_t) {
-    (_rendererAfter)();
+  if (_rendererMenuAfter != nullptr_t) {
+    (_rendererMenuAfter)();
   }
 }
 
@@ -408,8 +409,8 @@ void SCMenu::setSelectEventListener(SCMenuItemCallback callback) {
  *
  * @param render callback function
  */
-void SCMenu::setRendererBefore(SCMenuCallback callback) {
-  _rendererBefore = callback;
+void SCMenu::setRendererMenuBefore(SCMenuCallback callback) {
+  _rendererMenuBefore = callback;
 }
 
 /**
@@ -417,8 +418,8 @@ void SCMenu::setRendererBefore(SCMenuCallback callback) {
  *
  * @param render callback function
  */
-void SCMenu::setRendererAfter(SCMenuCallback callback) {
-  _rendererAfter = callback;
+void SCMenu::setRendererMenuAfter(SCMenuCallback callback) {
+  _rendererMenuAfter = callback;
 }
 
 /**

@@ -73,10 +73,10 @@ class SCMenu {
     scmenu_index _itemsLen;
     scmenu_index _focusedItemIndex;
     scmenu_index _selectedItemIndex;
-    scmenu_index _hasSelection;
+    bool _hasSelection;
     SCMenuItemCallback _selectListener;
-    SCMenuCallback _rendererBefore;
-    SCMenuCallback _rendererAfter;
+    SCMenuCallback _rendererMenuBefore;
+    SCMenuCallback _rendererMenuAfter;
     SCMenuItemCallback _rendererMenuItem;
   public:
     SCMenu();
@@ -84,16 +84,16 @@ class SCMenu {
     void empty();
     void reset();
     void setSelectEventListener(SCMenuItemCallback);
-    void setRendererBefore(SCMenuCallback);
+    void setRendererMenuBefore(SCMenuCallback);
     void setRendererMenuItem(SCMenuItemCallback);
-    void setRendererAfter(SCMenuCallback);
+    void setRendererMenuAfter(SCMenuCallback);
     SCMenuItem* addItem(char*, SCMenuItem* = nullptr_t);
     bool removeItem(SCMenuItem* = nullptr_t);
     void first();
     void last();
     bool prev(bool = false);
     bool next(bool = false);
-    void select(bool = false);
+    void select(bool = true);
     bool back();
     bool hasSelection();
     SCMenuItem* getSelected();
