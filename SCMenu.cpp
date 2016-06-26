@@ -125,7 +125,7 @@ void SCMenu::reset() {
   _focusedItemIndex = 0;
   _selectedItemIndex = 0;
   _hasSelection = false;
-  for (int i = 0; i < _itemsLen; i++) {
+  for (scmenu_index i = 0; i < _itemsLen; i++) {
     _items[i]._isFocused = false;
   }
 }
@@ -139,10 +139,10 @@ void SCMenu::reset() {
  * @return pointer to newly created menu item
  */
 SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem) {
-  SCMenuItem *itemsNew;
-  itemsNew = (SCMenuItem*)realloc(_items, sizeof(SCMenuItem)*(_itemsLen+1));
-  if (itemsNew == nullptr_t) {
-    free(itemsNew);
+  SCMenuItem *items_new;
+  items_new = (SCMenuItem*)realloc(_items, sizeof(SCMenuItem)*(_itemsLen+1));
+  if (items_new == nullptr_t) {
+    free(items_new);
     return nullptr_t;
   }
   else {
@@ -161,6 +161,70 @@ SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem) {
 }
 
 /**
+ * Remove menu item from menu
+ *
+ * @param menu item reference
+ *
+ * @return true if item is removed
+ */
+bool SCMenu::removeItem(SCMenuItem *item) {
+  if (item->hasChildrens()) {
+    SCMenuItem *items_new;
+    items_new = (SCMenuItem*)realloc(_items, sizeof(_items));
+    if (items_new == nullptr_t) {
+      free(items_new);
+      return false;
+    }
+    else {
+      for (scmenu_index i = 0; i < _itemsLen; i++) {
+        if (item == &_items[i]) {
+          delete &_items[i];
+        }
+      }
+      _items = items_new;
+    }
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+/**
+ * Move focus to first item in menu for a current level
+ */
+void SCMenu::first() {
+  bool loop_start_index_found = false;
+  for (scmenu_index i = 0; i < _itemsLen; i++) {
+    _items[i]._isFocused = false;
+    if (!loop_start_index_found) {
+      if ((_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) || (!_hasSelection && _items[i]._parent == nullptr_t)) {
+        loop_start_index_found = true;
+        _items[i]._isFocused = false;
+        _focusedItemIndex = i;
+      }
+    }
+  }
+}
+
+/**
+ * Move focus to last item in menu for a current level
+ */
+void SCMenu::last() {
+  bool loop_start_index_found = false;
+  for (scmenu_index i = _itemsLen-1; i >= 0; i--) {
+    _items[i]._isFocused = false;
+    if (!loop_start_index_found) {
+      if ((_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) || (!_hasSelection && _items[i]._parent == nullptr_t)) {
+        loop_start_index_found = true;
+        _items[i]._isFocused = false;
+        _focusedItemIndex = i;
+      }
+    }
+  }
+}
+
+/**
  * Move focus to previous item
  *
  * @param weither to go in loop not to stop on first element
@@ -169,10 +233,10 @@ SCMenuItem* SCMenu::addItem(char* label, SCMenuItem* parentItem) {
  */
 bool SCMenu::prev(bool loop) {
   bool founded_next = false;
-  int old_focus = _focusedItemIndex;
-  int loop_start_index = 0;
+  scmenu_index old_focus = _focusedItemIndex;
+  scmenu_index loop_start_index = 0;
   bool loop_start_index_found = false;
-  for (int i = _itemsLen-1; i >= 0; i--) {
+  for (scmenu_index i = _itemsLen-1; i >= 0; i--) {
     _items[i]._isFocused = false;
     if ((_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) || (!_hasSelection && _items[i]._parent == nullptr_t)) {
       if (!loop_start_index_found) {
@@ -210,10 +274,10 @@ bool SCMenu::prev(bool loop) {
  */
 bool SCMenu::next(bool loop) {
   bool founded_next = false;
-  int old_focus = _focusedItemIndex;
-  int loop_start_index = 0;
+  scmenu_index old_focus = _focusedItemIndex;
+  scmenu_index loop_start_index = 0;
   bool loop_start_index_found = false;
-  for (int i = 0; i < _itemsLen; i++) {
+  for (scmenu_index i = 0; i < _itemsLen; i++) {
     _items[i]._isFocused = false;
     if ((_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) || (!_hasSelection && _items[i]._parent == nullptr_t)) {
       if (!loop_start_index_found) {
@@ -244,11 +308,13 @@ bool SCMenu::next(bool loop) {
 
 /**
  * Select current focused menu item
+ *
+ * @param menu item will be selected until back action is emitted.
  */
-void SCMenu::select() {
+void SCMenu::select(bool until_back) {
   _hasSelection = true;
   _selectedItemIndex = _focusedItemIndex;
-  for (int i = 0; i < _itemsLen; i++) {
+  for (scmenu_index i = 0; i < _itemsLen; i++) {
     _items[i]._isSelected = (_selectedItemIndex == i);
   }
   if (_selectListener != nullptr_t) {
@@ -256,9 +322,9 @@ void SCMenu::select() {
   }
   if (_items[_selectedItemIndex].hasChildrens()) {
     SCMenu::render();
-    next();
+    SCMenu::first();
   }
-  else {
+  else if (until_back) {
     SCMenu::back();
   }
 }
@@ -272,7 +338,7 @@ bool SCMenu::back() {
   if (_hasSelection) {
     _focusedItemIndex = _selectedItemIndex;
     _hasSelection = _items[_selectedItemIndex]._parent ? true : false;
-    for (int i = 0; i < _itemsLen; i++) {
+    for (scmenu_index i = 0; i < _itemsLen; i++) {
       if (_hasSelection && _items[_selectedItemIndex]._parent == &_items[i]) {
         _selectedItemIndex = i;
       }
@@ -285,27 +351,46 @@ bool SCMenu::back() {
 }
 
 /**
+ * Check if in menu has selected menu item
+ *
+ * @return bool
+ */
+bool SCMenu::hasSelection() {
+  return _hasSelection;
+}
+
+/**
+ * Get current selected menu item
+ *
+ * @return reference to menu item
+ */
+SCMenuItem* SCMenu::getSelected() {
+  if (_hasSelection) {
+    return &_items[_selectedItemIndex];
+  }
+  return nullptr_t;
+}
+
+/**
  * Render the menu
  */
 void SCMenu::render() {
 
+  // Execute callback before menu items are rendered.
   if (_rendererBefore != nullptr_t) {
     (_rendererBefore)();
   }
 
+  // Actual menu item rendering, skip hidden menu items.
   if (_rendererMenuItem != nullptr_t) {
-    for (int i = 0; i < _itemsLen; i++) {
-      if (!_items[i].isHidden()) {
-        if (!_hasSelection && !_items[i]._parent) {
-          (_rendererMenuItem)(&_items[i]);
-        }
-        else if (_hasSelection && _items[i]._parent == &_items[_selectedItemIndex]) {
-          (_rendererMenuItem)(&_items[i]);
-        }
+    for (scmenu_index i = 0; i < _itemsLen; i++) {
+      if (!_hasSelection && !_items[i].isHidden() && !_items[i]._parent && _items[i]._parent == &_items[_selectedItemIndex]) {
+        (_rendererMenuItem)(&_items[i]);
       }
     }
   }
 
+  // Execute callback after menu items are rendered.
   if (_rendererAfter != nullptr_t) {
     (_rendererAfter)();
   }
@@ -314,7 +399,7 @@ void SCMenu::render() {
 /**
  * Set event listener callback triggered when menu item is selected
  */
-void SCMenu::setSelectListener(SCMenuItemCallback callback) {
+void SCMenu::setSelectEventListener(SCMenuItemCallback callback) {
   _selectListener = callback;
 }
 

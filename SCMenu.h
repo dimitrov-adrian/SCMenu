@@ -12,12 +12,6 @@
 
 #include <stdlib.h>
 
-#ifdef nullptr
-  #define nullptr_t nullptr
-#else
-  #define nullptr_t NULL
-#endif
-
 /**
  * Early prototypes
  */
@@ -25,8 +19,22 @@ class SCMenu;
 class SCMenuItem;
 
 /**
- * Typedefs
+ * Types
  */
+#ifdef nullptr
+  #define nullptr_t nullptr
+#else
+  #define nullptr_t NULL
+#endif
+
+#ifndef scmenu_index
+  #ifdef byte
+    typedef unsigned byte scmenu_index;
+  #else
+    typedef unsigned short int scmenu_index;
+  #endif
+#endif
+
 typedef void (*SCMenuCallback)();
 typedef void (*SCMenuItemCallback)(SCMenuItem*);
 
@@ -62,10 +70,10 @@ class SCMenuItem {
 class SCMenu {
   protected:
     SCMenuItem* _items;
-    int _itemsLen;
-    int _focusedItemIndex;
-    int _selectedItemIndex;
-    bool _hasSelection;
+    scmenu_index _itemsLen;
+    scmenu_index _focusedItemIndex;
+    scmenu_index _selectedItemIndex;
+    scmenu_index _hasSelection;
     SCMenuItemCallback _selectListener;
     SCMenuCallback _rendererBefore;
     SCMenuCallback _rendererAfter;
@@ -75,15 +83,20 @@ class SCMenu {
     ~SCMenu();
     void empty();
     void reset();
-    void setSelectListener(SCMenuItemCallback);
+    void setSelectEventListener(SCMenuItemCallback);
     void setRendererBefore(SCMenuCallback);
     void setRendererMenuItem(SCMenuItemCallback);
     void setRendererAfter(SCMenuCallback);
     SCMenuItem* addItem(char*, SCMenuItem* = nullptr_t);
+    bool removeItem(SCMenuItem* = nullptr_t);
+    void first();
+    void last();
     bool prev(bool = false);
     bool next(bool = false);
-    void select();
+    void select(bool = false);
     bool back();
+    bool hasSelection();
+    SCMenuItem* getSelected();
     void render();
 };
 
